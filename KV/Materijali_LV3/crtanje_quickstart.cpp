@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "/usr/include/GL/glut.h"
-#include "/usr/include/sndfile.hh"
+#include "GL/glut.h"
+
+//#include "/usr/include/sndfile.hh"
 
 #include <math.h>
 #include <iostream>
-#include <pthread.h>
-#include <unistd.h>
+//#include <pthread.h>
+//#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -101,8 +102,9 @@ void loadTexture()
   int twidth, theight;   // širina/visin u pikselima
   unsigned char* tdata;  // podaci piksela
   // Učitavanje slike:
-  tdata = loadPPM("auto3.ppm", twidth, theight);
-  if (tdata==NULL) return;
+ 	tdata = loadPPM("..\\auto3.ppm", twidth, theight);
+
+	  if (tdata==NULL) return;
   // Kreiranje ID-a za teksturu
   glGenTextures(1, &texture[0]);
   // Postavljanje ove teksture kao one s kojom radimo
