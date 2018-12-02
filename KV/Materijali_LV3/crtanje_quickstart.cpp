@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "GL/glut.h"
 
-//#include "/usr/include/sndfile.hh"
+#include "../sndfile.hh"
 
 #include <math.h>
 #include <iostream>
@@ -81,8 +81,7 @@ void loadTexture()
 
 //gloabls
 
-
-
+int playSound();
 
 int main(int argc, char** argv){
 
@@ -203,6 +202,7 @@ void readSensors(unsigned char key, int x, int y) {
 	}
 	
 	writeShapes(positions);
+	playSound();
 
 }
 void writeShapes(int *positions) {
@@ -320,11 +320,37 @@ void writeShapes(int *positions) {
 			break;
 		}
 
-
 	}
 	//display();
 	glEnd();
 	glutSwapBuffers();
+
+
+}
+
+int playSound() {
+	const int format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+	//  const int format=SF_FORMAT_WAV | SF_FORMAT_FLOAT;
+	const int channels = 1;
+	const int sampleRate = 48000;
+	const char* outfilename = "foo.wav";
+
+	cout << "wav_writer..." << endl;
+
+	SndfileHandle outfile(outfilename, SFM_WRITE, format, channels, sampleRate);
+	if (!outfile) {
+		return -1;
+	}
+
+	// prepare a 5 seconds buffer and write it
+	const int size = sampleRate * 5;
+	float sample[size], factor = 1.0;
+	for (int i = 0; i<size; i++) {
+		sample[i] = sin(float(i) / size* 1 * 3000) * factor;
+	}
+	outfile.write(&sample[0], size);
+
+	cout << "done!" << endl;
 }
 
 void f_tipke(int key, int x, int y){

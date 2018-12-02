@@ -1,0 +1,10 @@
+SOURCES=wav_writer.cc
+CC=g++
+LIBS=-lsndfile
+
+all:	wav_writer
+
+wav_writer:	wav_writer.o
+	@echo 'Building $@'
+	$(CC) $(LDFLAGS) $(LIBDIR) wav_writer.o -o wav_writer $(LIBS)
+
