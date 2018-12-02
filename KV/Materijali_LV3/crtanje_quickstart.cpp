@@ -14,15 +14,24 @@
 #include <cstdlib>
 
 using namespace std; // dopušta ispis iz konzole bez pisanja: std::
+
+					 
+					 
 /*! GLUT funkcija za poziv za početnog ekrana */
 void display(void);
 /*! GLUT funkcija za ponovno iscrtavanje */
 void reshape(int, int);
 /*! GLUT idle funkcija */
 void idle();
+
+
+
+void readSensors(unsigned char key, int x, int y);
+void writeShapes(int *positions);
 void f_tipke(int, int, int);
 
 int zvuk=0;
+int positions[4];
 
 
 /** Učitava ppm datoteku (sliku) s diska.
@@ -30,54 +39,7 @@ int zvuk=0;
  @input width - širina slike
  @input height - visina slike
  @return Vraca vrijednosti piksela u RGB obliku kao unsigned chars (R0 G0 B0 R1 G1 B1 R2 G2 B2 .... itd) **/
-unsigned char* loadPPM(const char* filename, int& width, int& height){
-	const int BUFSIZE = 128;
-	FILE* fp;
-	unsigned int read;
-	unsigned char* rawData;
-	char buf[3][BUFSIZE];
-	char* retval_fgets;
-	size_t retval_sscanf;
-
-	if ( (fp=fopen(filename, "rb")) == NULL)
-	{
-		std::cerr << "error reading ppm file, could not locate " << filename << std::endl;
-		width = 0;
-		height = 0;
-		return NULL;
-	}
-
-	retval_fgets = fgets(buf[0], BUFSIZE, fp);
-
-	// Pročitaj širinu i visinu:
-	do
-	{
-		retval_fgets=fgets(buf[0], BUFSIZE, fp);
-	} while (buf[0][0] == '#');
-	retval_sscanf=sscanf(buf[0], "%s %s", buf[1], buf[2]);
-	width  = atoi(buf[1]);
-	height = atoi(buf[2]);
-
-	// Pročitaj maxval:
-	do
-	{
-	  retval_fgets=fgets(buf[0], BUFSIZE, fp);
-	} while (buf[0][0] == '#');
-
-	// Pročitaj podatke iz slike:
-	rawData = new unsigned char[width * height * 3];
-	read = fread(rawData, width * height * 3, 1, fp);
-	fclose(fp);
-	if (read != 1)
-	{
-		std::cerr << "error parsing ppm file, incomplete data" << std::endl;
-		delete[] rawData;
-		width = 0;
-		height = 0;
-		return NULL;
-	}
-	return rawData;
-}
+unsigned char* loadPPM(const char* filename, int& width, int& height);
 
 // inicijalizacija OpenGL-a
 void initGL()
@@ -90,6 +52,7 @@ void initGL()
   // omogući dodatne postavke vezane za korekciju zbog perspektive, anti-aliasinga i slicno:
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glEnable(GL_LINE_SMOOTH);
+  
   glEnable(GL_POLYGON_SMOOTH);
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
@@ -116,18 +79,24 @@ void loadTexture()
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
+//gloabls
+
+
+
+
 int main(int argc, char** argv){
 
   glutInit(&argc, argv);
-  /* postavi veličinu prozora na  512 x 512 */
-  glutInitWindowSize(512, 512);
+  /* postavi veličin prozora na  512 x 512 */
+  glutInitWindowPosition(545, 180);
+  glutInitWindowSize(720,720);
   /*postavi mod ekrana u: Red, Green, Blue, Alpha
     alociraj depth buffer
     omogući double buffering
   */
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
   /* kreiraj prozor */
-  glutCreateWindow("Texturing Example");
+  glutCreateWindow("Screen");
   /* postavi GLUT funkciju za display callback
     ova funkcija će se pozvati treba biti iscrtan prozor*/
   glutDisplayFunc(display);
@@ -139,8 +108,9 @@ int main(int argc, char** argv){
 
   glutIdleFunc(idle);
 
-  glutSpecialFunc(f_tipke);
-
+  //glutSpecialFunc(f_tipke);
+  glutKeyboardFunc(readSensors);
+  
   loadTexture();
   initGL();
 
@@ -150,112 +120,289 @@ int main(int argc, char** argv){
   return 0;
 }
 
-void f_tipke(int key, int x, int y){
+void readSensors(unsigned char key, int x, int y) {
+	
+	switch (key) {
+	case 'q':
+	case 'Q':
+		positions[0] = 0;
+		break;
 
-	switch(key){
-		case GLUT_KEY_F1:
-			zvuk=1;
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  			glBegin(GL_QUADS);
-    			glColor3f(1, 1, 1);
+	case 'w':
+	case 'W':
+		positions[0] = 1;
+		break;
 
-   			 // koordinate točaka pozadinskog pravokutnika (upside down)
-    			glTexCoord2f(0, 1); glVertex3f(-2, -1, 0);
-    			glTexCoord2f(1, 1); glVertex3f(2, -1, 0);
-    			glTexCoord2f(1, 0); glVertex3f(2, 1, 0);
-    			glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
+	case 'e':
+	case 'E':
+		positions[0] = 2;
+		break;
 
-  			/* crtanje cetverokuta */
-  			glEnd();
-   			glColor3f(1.0,0.0,0.0);
-     			glBegin(GL_QUADS);
-         		//prva linija prednja lijeva strana
-        		glVertex3f(-1.22f, -0.20f, 0.0f); // top left
-        		glVertex3f(-1.15f,-0.16f, 0.0f); // top right 
-        		glVertex3f(-1.03f, -0.36f, 0.0f); // bottom right
-        		glVertex3f(-1.1f, -0.40f, 0.0f); // bottom left
-        		glEnd();
-        		glutSwapBuffers();
+	case 'r':
+	case 'R':
+		positions[0] = 3;
+		break;
+	case 'y':
+	case 'Y':
+		positions[1] = 0;
+		break;
 
+	case 'x':
+	case 'X':
+		positions[1] = 1;
+		break;
+
+	case 'c':
+	case 'C':
+		positions[1] = 2;
+		break;
+
+	case 'v':
+	case 'V':
+		positions[1] = 3;
+		break;
+	case 'u':
+	case 'U':
+		positions[2] = 0;
+		break;
+
+	case 'i':
+	case 'I':
+		positions[2] = 1;
+		break;
+
+	case 'o':
+	case 'O':
+		positions[2] = 2;
+		break;
+
+	case 'p':
+	case 'P':
+		positions[2] = 3;
+		break;
+	
+	case 'h':
+	case 'H':
+		positions[3] = 0;
+		break;
+	case 'j':
+	case 'J':
+		positions[3] = 1;
+		break;
+
+	case 'k':
+	case 'K':
+		positions[3] = 2;
+		break;
+
+	case 'l':
+	case 'L':
+		positions[3] = 3;
+		break;
+
+	}
+	
+	//writeShapes(positions);
+
+}
+void writeShapes(int *positions) {
+	
+	int i;
+	int xp, yp;
+	for (i = 0; i < 4; i++) {
+		//dohvati predznak koordinata, ovisno koji je redni broj senzora
+		if (i < 2){
+			xp = -1;
+		}
+		else {
+			xp = 1;
+		}
+		if (i % 2) {
+			yp = -1;
+		}
+		else {
+			yp = 1;
+		}
+
+
+		switch (positions[i]) {
+		case 3:
+			zvuk = 1;
+		
+			glColor3f(1.0, 0.0, 0.0);
+			glBegin(GL_QUADS);
+			//prva linija prednja lijeva strana
+			glVertex3f(xp*1.22f, yp*0.20f, 0.0f); // top left
+			glVertex3f(xp*1.15f, yp*0.16f, 0.0f); // top right 
+			glVertex3f(xp*1.03f, yp*0.36f, 0.0f); // bottom right
+			glVertex3f(xp*1.1f, yp*0.40f, 0.0f); // bottom left
+			glEnd();
+			glutSwapBuffers();
 
 			break;
-		case GLUT_KEY_F2:
-			zvuk=2;
+		
+		case 2:
+			zvuk = 2;
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  			glBegin(GL_QUADS);
-    			glColor3f(1, 1, 1);
+			glColor3f(1.0, 0.0, 0.0);
+			glBegin(GL_QUADS);
+			//prva linija prednja lijeva strana
+			glVertex3f(xp*1.22f, yp*0.20f, 0.0f); // top left
+			glVertex3f(xp*1.15f, yp*0.16f, 0.0f); // top right 
+			glVertex3f(xp*1.03f, yp*0.36f, 0.0f); // bottom right
+			glVertex3f(xp*1.1f, yp*0.40f, 0.0f); // bottom left
 
-    			 // koordinate točaka pozadinskog pravokutnika (upside down)
-    			glTexCoord2f(0, 1); glVertex3f(-2, -1, 0);
-    			glTexCoord2f(1, 1); glVertex3f(2, -1, 0);
-    			glTexCoord2f(1, 0); glVertex3f(2, 1, 0);
-    			glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
-
-    			/* crtanje cetverokuta */
-  			glEnd();
-   			glColor3f(1.0,0.0,0.0);
-     			glBegin(GL_QUADS);
-         		//prva linija prednja lijeva strana
-        		glVertex3f(-1.22f, -0.20f, 0.0f); // top left
-        		glVertex3f(-1.15f,-0.16f, 0.0f); // top right 
-        		glVertex3f(-1.03f, -0.36f, 0.0f); // bottom right
-        		glVertex3f(-1.1f, -0.40f, 0.0f); // bottom left
-        
-			glColor3f(1.0,0.35,0.35);
-        		//druga linija prednja lijeva strana
-        		glVertex3f(-1.35f,-0.20f,0.00f);//top left
-        		glVertex3f(-1.28f,-0.16f,0.0f);//top right
-        		glVertex3f(-1.09f,-0.46f,0.00f);//bottom right
-        		glVertex3f(-1.15f,-0.50f,0.0f);//bottom left
-       			glEnd();
-        		glutSwapBuffers();
+			glColor3f(0.921, 0.890, 0);
+			//druga linija prednja lijeva strana
+			glVertex3f(xp*1.35f, yp*0.20f, 0.00f);//top left
+			glVertex3f(xp*1.28f, yp*0.16f, 0.0f);//top right
+			glVertex3f(xp*1.09f, yp*0.46f, 0.00f);//bottom right
+			glVertex3f(xp*1.15f, yp*0.50f, 0.0f);//bottom left
+			glEnd();
+			glutSwapBuffers();
 			break;
-		case GLUT_KEY_F3:
-			zvuk=3;
+		case 1:
+			zvuk = 3;
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  			glBegin(GL_QUADS);
-   	 		glColor3f(1, 1, 1);
+			glColor3f(1.0, 0.0, 0.0);
+			glBegin(GL_QUADS);
+			//prva linija prednja lijeva strana
+			glVertex3f(xp*1.22f, yp*0.20f, 0.0f); // top left
+			glVertex3f(xp*1.15f, yp*0.16f, 0.0f); // top right 
+			glVertex3f(xp*1.03f, yp*0.36f, 0.0f); // bottom right
+			glVertex3f(xp*1.1f, yp*0.40f, 0.0f); // bottom left
 
-   	 		// koordinate točaka pozadinskog pravokutnika (upside down)
-    			glTexCoord2f(0, 1); glVertex3f(-2, -1, 0);
-    			glTexCoord2f(1, 1); glVertex3f(2, -1, 0);
-    			glTexCoord2f(1, 0); glVertex3f(2, 1, 0);
-    			glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
+			glColor3f(0.921, 0.890, 0);
+			//druga linija prednja lijeva strana
+			glVertex3f(xp*1.35f, yp*0.20f, 0.00f);//top left
+			glVertex3f(xp*1.28f, yp*0.16f, 0.0f);//top right
+			glVertex3f(xp*1.09f, yp*0.46f, 0.00f);//bottom right
+			glVertex3f(xp*1.15f, yp*0.50f, 0.0f);//bottom left
 
-    			/* crtanje cetverokuta */
-  			glEnd();
-   			glColor3f(1.0,0.0,0.0);
-     			glBegin(GL_QUADS);
-         		//prva linija prednja lijeva strana
-        		glVertex3f(-1.22f, -0.20f, 0.0f); // top left
-        		glVertex3f(-1.15f,-0.16f, 0.0f); // top right 
-        		glVertex3f(-1.03f, -0.36f, 0.0f); // bottom right
-        		glVertex3f(-1.1f, -0.40f, 0.0f); // bottom left
+			glColor3f(0, 0.878, 0.090);
+			//treca linija prednja lijeva strana
+			glVertex3f(xp*1.48f, yp*0.21f, 0.0f);//top left
+			glVertex3f(xp*1.40f, yp*0.16f, 0.0f);//top right
+			glVertex3f(xp*1.14f, yp*0.55f, 0.0f);//bottom right
+			glVertex3f(xp*1.22f, yp*0.60f, 0.0f);//bottom left
 
-        		glColor3f(1.0,0.35,0.35);
-        		//druga linija prednja lijeva strana
-        		glVertex3f(-1.35f,-0.20f,0.00f);//top left
-        		glVertex3f(-1.28f,-0.16f,0.0f);//top right
-        		glVertex3f(-1.09f,-0.46f,0.00f);//bottom right
-        		glVertex3f(-1.15f,-0.50f,0.0f);//bottom left
-
-        		glColor3f(1.0,0.50,0.50);
-        		//treca linija prednja lijeva strana
-        		glVertex3f(-1.48f,-0.21f,0.0f);//top left
-        		glVertex3f(-1.40f,-0.16f,0.0f);//top right
-        		glVertex3f(-1.14f,-0.55f,0.0f);//bottom right
-        		glVertex3f(-1.22f,-0.60f,0.0f);//bottom left
-
-        		glEnd();
-       			glutSwapBuffers();
+			glEnd();
+			glutSwapBuffers();
 			break;
-		case GLUT_KEY_F4:
-			zvuk=0;
+		case 0:
+			zvuk = 0;
 			display();
 			break;
 		}
+	}
+}
+
+void f_tipke(int key, int x, int y){
+	printf("%c", key);
+	switch (key) {
+	case GLUT_KEY_F1:
+		zvuk = 1;
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBegin(GL_QUADS);
+		glColor3f(1, 1, 1);
+
+		// koordinate točaka pozadinskog pravokutnika (upside down)
+		glTexCoord2f(0, 1); glVertex3f(-2, -1, 0);
+		glTexCoord2f(1, 1); glVertex3f(2, -1, 0);
+		glTexCoord2f(1, 0); glVertex3f(2, 1, 0);
+		glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
+
+		/* crtanje cetverokuta */
+		glEnd();
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_QUADS);
+		//prva linija prednja lijeva strana
+		glVertex3f(-1.22f, -0.20f, 0.0f); // top left
+		glVertex3f(-1.15f, -0.16f, 0.0f); // top right 
+		glVertex3f(-1.03f, -0.36f, 0.0f); // bottom right
+		glVertex3f(-1.1f, -0.40f, 0.0f); // bottom left
+		glEnd();
+		glutSwapBuffers();
+
+
+		break;
+	case GLUT_KEY_F2:
+		zvuk = 2;
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBegin(GL_QUADS);
+		glColor3f(1, 1, 1);
+
+		// koordinate točaka pozadinskog pravokutnika (upside down)
+		glTexCoord2f(0, 1); glVertex3f(-2, -1, 0);
+		glTexCoord2f(1, 1); glVertex3f(2, -1, 0);
+		glTexCoord2f(1, 0); glVertex3f(2, 1, 0);
+		glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
+
+		/* crtanje cetverokuta */
+		glEnd();
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_QUADS);
+		//prva linija prednja lijeva strana
+		glVertex3f(-1.22f, -0.20f, 0.0f); // top left
+		glVertex3f(-1.15f, -0.16f, 0.0f); // top right 
+		glVertex3f(-1.03f, -0.36f, 0.0f); // bottom right
+		glVertex3f(-1.1f, -0.40f, 0.0f); // bottom left
+
+		glColor3f(1.0, 0.35, 0.35);
+		//druga linija prednja lijeva strana
+		glVertex3f(-1.35f, -0.20f, 0.00f);//top left
+		glVertex3f(-1.28f, -0.16f, 0.0f);//top right
+		glVertex3f(-1.09f, -0.46f, 0.00f);//bottom right
+		glVertex3f(-1.15f, -0.50f, 0.0f);//bottom left
+		glEnd();
+		glutSwapBuffers();
+		break;
+	case GLUT_KEY_F3:
+		zvuk = 3;
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBegin(GL_QUADS);
+		glColor3f(1, 1, 1);
+
+		// koordinate točaka pozadinskog pravokutnika (upside down)
+		glTexCoord2f(0, 1); glVertex3f(-2, -1, 0);
+		glTexCoord2f(1, 1); glVertex3f(2, -1, 0);
+		glTexCoord2f(1, 0); glVertex3f(2, 1, 0);
+		glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
+
+		/* crtanje cetverokuta */
+		glEnd();
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_QUADS);
+		//prva linija prednja lijeva strana
+		glVertex3f(-1.22f, -0.20f, 0.0f); // top left
+		glVertex3f(-1.15f, -0.16f, 0.0f); // top right 
+		glVertex3f(-1.03f, -0.36f, 0.0f); // bottom right
+		glVertex3f(-1.1f, -0.40f, 0.0f); // bottom left
+
+		glColor3f(1.0, 0.35, 0.35);
+		//druga linija prednja lijeva strana
+		glVertex3f(-1.35f, -0.20f, 0.00f);//top left
+		glVertex3f(-1.28f, -0.16f, 0.0f);//top right
+		glVertex3f(-1.09f, -0.46f, 0.00f);//bottom right
+		glVertex3f(-1.15f, -0.50f, 0.0f);//bottom left
+
+		glColor3f(1.0, 0.50, 0.50);
+		//treca linija prednja lijeva strana
+		glVertex3f(-1.48f, -0.21f, 0.0f);//top left
+		glVertex3f(-1.40f, -0.16f, 0.0f);//top right
+		glVertex3f(-1.14f, -0.55f, 0.0f);//bottom right
+		glVertex3f(-1.22f, -0.60f, 0.0f);//bottom left
+
+		glEnd();
+		glutSwapBuffers();
+		break;
+	case GLUT_KEY_F4:
+		zvuk = 0;
+		display();
+		break;
+	}
 
 
 }
@@ -283,8 +430,10 @@ void display(){
   /* završeno crtanje četveroktua */
   glEnd();
 
+
   /* zamijeni buffere (jer u jednom crta, a drugi prikazuje na ekranu) */
   glutSwapBuffers();
+  writeShapes(positions);
 }
 
 /* glut reshape callback funkcija. Poziva se kad se mijenja dimenzija prozora
@@ -309,6 +458,60 @@ void reshape(int width, int height)
   /* prebaci natrag na matricu modela */
   glMatrixMode(GL_MODELVIEW);
 
+}
+
+/** Učitava ppm datoteku (sliku) s diska.
+@input filename - putanja do slike
+@input width - širina slike
+@input height - visina slike
+@return Vraca vrijednosti piksela u RGB obliku kao unsigned chars (R0 G0 B0 R1 G1 B1 R2 G2 B2 .... itd) **/
+unsigned char* loadPPM(const char* filename, int& width, int& height) {
+	const int BUFSIZE = 128;
+	FILE* fp;
+	unsigned int read;
+	unsigned char* rawData;
+	char buf[3][BUFSIZE];
+	char* retval_fgets;
+	size_t retval_sscanf;
+
+	if ((fp = fopen(filename, "rb")) == NULL)
+	{
+		std::cerr << "error reading ppm file, could not locate " << filename << std::endl;
+		width = 0;
+		height = 0;
+		return NULL;
+	}
+
+	retval_fgets = fgets(buf[0], BUFSIZE, fp);
+
+	// Pročitaj širinu i visinu:
+	do
+	{
+		retval_fgets = fgets(buf[0], BUFSIZE, fp);
+	} while (buf[0][0] == '#');
+	retval_sscanf = sscanf(buf[0], "%s %s", buf[1], buf[2]);
+	width = atoi(buf[1]);
+	height = atoi(buf[2]);
+
+	// Pročitaj maxval:
+	do
+	{
+		retval_fgets = fgets(buf[0], BUFSIZE, fp);
+	} while (buf[0][0] == '#');
+
+	// Pročitaj podatke iz slike:
+	rawData = new unsigned char[width * height * 3];
+	read = fread(rawData, width * height * 3, 1, fp);
+	fclose(fp);
+	if (read != 1)
+	{
+		std::cerr << "error parsing ppm file, incomplete data" << std::endl;
+		delete[] rawData;
+		width = 0;
+		height = 0;
+		return NULL;
+	}
+	return rawData;
 }
 
 /* ovo se poziva kad racuanlo nema nista za raditi (kad nista novo ne crtamo nego samo cekamo neki event) */
