@@ -161,54 +161,65 @@ void readSensors(unsigned char key, int x, int y) {
 	case 'V':
 		positions[1] = 3;
 		break;
-	case 'u':
-	case 'U':
+	case 'O':
+	case 'o':
 		positions[2] = 0;
 		break;
 
-	case 'i':
 	case 'I':
+	case 'i':
 		positions[2] = 1;
 		break;
 
-	case 'o':
-	case 'O':
+	case 'U':
+	case 'u':
 		positions[2] = 2;
 		break;
 
-	case 'p':
-	case 'P':
+	case 'Z':
+	case 'z':
 		positions[2] = 3;
 		break;
 	
-	case 'h':
-	case 'H':
+	case '.':
+	case ';':
 		positions[3] = 0;
 		break;
-	case 'j':
-	case 'J':
+	case 'M':
+	case 'm':
 		positions[3] = 1;
 		break;
 
-	case 'k':
-	case 'K':
+	case 'N':
+	case 'n':
 		positions[3] = 2;
 		break;
 
-	case 'l':
-	case 'L':
+	case 'B':
+	case 'b':
 		positions[3] = 3;
 		break;
 
 	}
 	
-	//writeShapes(positions);
+	writeShapes(positions);
 
 }
 void writeShapes(int *positions) {
-	
+	printf("%d %d %d %d\n", positions[0], positions[1], positions[2], positions[3]);
 	int i;
 	int xp, yp;
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBegin(GL_QUADS);
+	glColor3f(1, 1, 1);
+
+	// koordinate točaka pozadinskog pravokutnika (upside down)
+	glTexCoord2f(0, 1); glVertex3f(-2, -1, 0);
+	glTexCoord2f(1, 1); glVertex3f(2, -1, 0);
+	glTexCoord2f(1, 0); glVertex3f(2, 1, 0);
+	glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
+
 	for (i = 0; i < 4; i++) {
 		//dohvati predznak koordinata, ovisno koji je redni broj senzora
 		if (i < 2){
@@ -224,77 +235,94 @@ void writeShapes(int *positions) {
 			yp = 1;
 		}
 
-
+	
 		switch (positions[i]) {
 		case 3:
-			zvuk = 1;
-		
+			
+			//prva linija
 			glColor3f(1.0, 0.0, 0.0);
-			glBegin(GL_QUADS);
-			//prva linija prednja lijeva strana
 			glVertex3f(xp*1.22f, yp*0.20f, 0.0f); // top left
 			glVertex3f(xp*1.15f, yp*0.16f, 0.0f); // top right 
 			glVertex3f(xp*1.03f, yp*0.36f, 0.0f); // bottom right
 			glVertex3f(xp*1.1f, yp*0.40f, 0.0f); // bottom left
-			glEnd();
-			glutSwapBuffers();
-
+		
 			break;
 		
 		case 2:
-			zvuk = 2;
+			
 
+			//prva linija
 			glColor3f(1.0, 0.0, 0.0);
-			glBegin(GL_QUADS);
-			//prva linija prednja lijeva strana
 			glVertex3f(xp*1.22f, yp*0.20f, 0.0f); // top left
 			glVertex3f(xp*1.15f, yp*0.16f, 0.0f); // top right 
 			glVertex3f(xp*1.03f, yp*0.36f, 0.0f); // bottom right
 			glVertex3f(xp*1.1f, yp*0.40f, 0.0f); // bottom left
 
+			//druga linija
 			glColor3f(0.921, 0.890, 0);
-			//druga linija prednja lijeva strana
 			glVertex3f(xp*1.35f, yp*0.20f, 0.00f);//top left
 			glVertex3f(xp*1.28f, yp*0.16f, 0.0f);//top right
 			glVertex3f(xp*1.09f, yp*0.46f, 0.00f);//bottom right
 			glVertex3f(xp*1.15f, yp*0.50f, 0.0f);//bottom left
-			glEnd();
-			glutSwapBuffers();
+		
 			break;
 		case 1:
-			zvuk = 3;
-
+			
+			//prva linija
 			glColor3f(1.0, 0.0, 0.0);
-			glBegin(GL_QUADS);
-			//prva linija prednja lijeva strana
 			glVertex3f(xp*1.22f, yp*0.20f, 0.0f); // top left
 			glVertex3f(xp*1.15f, yp*0.16f, 0.0f); // top right 
 			glVertex3f(xp*1.03f, yp*0.36f, 0.0f); // bottom right
 			glVertex3f(xp*1.1f, yp*0.40f, 0.0f); // bottom left
 
+			//druga linija
 			glColor3f(0.921, 0.890, 0);
-			//druga linija prednja lijeva strana
 			glVertex3f(xp*1.35f, yp*0.20f, 0.00f);//top left
 			glVertex3f(xp*1.28f, yp*0.16f, 0.0f);//top right
 			glVertex3f(xp*1.09f, yp*0.46f, 0.00f);//bottom right
 			glVertex3f(xp*1.15f, yp*0.50f, 0.0f);//bottom left
 
+			
+			//treca linija
 			glColor3f(0, 0.878, 0.090);
-			//treca linija prednja lijeva strana
 			glVertex3f(xp*1.48f, yp*0.21f, 0.0f);//top left
 			glVertex3f(xp*1.40f, yp*0.16f, 0.0f);//top right
 			glVertex3f(xp*1.14f, yp*0.55f, 0.0f);//bottom right
 			glVertex3f(xp*1.22f, yp*0.60f, 0.0f);//bottom left
-
-			glEnd();
-			glutSwapBuffers();
+		
+		
 			break;
 		case 0:
-			zvuk = 0;
-			display();
+
+			//iscrtavanje svih linija bijelom bojom
+			//prva linija
+			glColor3f(1.0, 1.0, 1.0);
+			glVertex3f(xp*1.22f, yp*0.20f, 0.0f); // top left
+			glVertex3f(xp*1.15f, yp*0.16f, 0.0f); // top right 
+			glVertex3f(xp*1.03f, yp*0.36f, 0.0f); // bottom right
+			glVertex3f(xp*1.1f, yp*0.40f, 0.0f); // bottom left
+
+			//druga linija
+			glColor3f(1,1,1);
+			glVertex3f(xp*1.35f, yp*0.20f, 0.00f);//top left
+			glVertex3f(xp*1.28f, yp*0.16f, 0.0f);//top right
+			glVertex3f(xp*1.09f, yp*0.46f, 0.00f);//bottom right
+			glVertex3f(xp*1.15f, yp*0.50f, 0.0f);//bottom left
+
+
+			//treca linija
+			glColor3f(1,1,1);
+			glVertex3f(xp*1.48f, yp*0.21f, 0.0f);//top left
+			glVertex3f(xp*1.40f, yp*0.16f, 0.0f);//top right
+			glVertex3f(xp*1.14f, yp*0.55f, 0.0f);//bottom right
+			glVertex3f(xp*1.22f, yp*0.60f, 0.0f);//bottom left
+			
 			break;
 		}
 	}
+	//display();
+	glEnd();
+	glutSwapBuffers();
 }
 
 void f_tipke(int key, int x, int y){
@@ -429,11 +457,10 @@ void display(){
 
   /* završeno crtanje četveroktua */
   glEnd();
-
-
+  
   /* zamijeni buffere (jer u jednom crta, a drugi prikazuje na ekranu) */
   glutSwapBuffers();
-  writeShapes(positions);
+
 }
 
 /* glut reshape callback funkcija. Poziva se kad se mijenja dimenzija prozora
