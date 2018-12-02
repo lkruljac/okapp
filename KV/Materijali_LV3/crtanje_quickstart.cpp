@@ -319,6 +319,8 @@ void writeShapes(int *positions) {
 			
 			break;
 		}
+
+
 	}
 	//display();
 	glEnd();
