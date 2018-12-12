@@ -126,10 +126,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\Materijali_LV3\crtanje_quickstart.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\sndfile.h" />
-    <ClInclude Include="..\..\sndfile.hh" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

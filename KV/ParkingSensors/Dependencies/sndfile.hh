@@ -273,11 +273,11 @@ SndfileHandle::command (int cmd, void *data, int datasize)
 inline sf_count_t
 SndfileHandle::seek (sf_count_t frame_count, int whence)
 {	return sf_seek (p->sf, frame_count, whence) ; }
-/*
+
 inline void
 SndfileHandle::writeSync (void)
 {	sf_write_sync (p->sf) ; }
-*/
+
 inline int
 SndfileHandle::setString (int str_type, const char* str)
 {	return sf_set_string (p->sf, str_type, str) ; }

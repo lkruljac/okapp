@@ -1,13 +1,18 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "GL/glut.h"
 
-#include "../sndfile.hh"
+#include "GL/glut.h"
+#include "../../sndfile.hh"
+
 
 #include <math.h>
 #include <iostream>
-//#include <pthread.h>
-//#include <unistd.h>
+
+#include <windows.h>
+#include <mmsystem.h>
+#include <io.h>
+
+
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -30,7 +35,17 @@ void readSensors(unsigned char key, int x, int y);
 void writeShapes(int *positions);
 void f_tipke(int, int, int);
 
-int zvuk=0;
+void usleep(DWORD waitTime) {
+	LARGE_INTEGER perfCnt, start, now;
+
+	QueryPerformanceFrequency(&perfCnt);
+	QueryPerformanceCounter(&start);
+
+	do {
+		QueryPerformanceCounter((LARGE_INTEGER*)&now);
+	} while ((now.QuadPart - start.QuadPart) / float(perfCnt.QuadPart) * 1000 * 1000 < waitTime);
+}
+
 int positions[4];
 
 
@@ -81,7 +96,7 @@ void loadTexture()
 
 //gloabls
 
-int playSound();
+void playSound();
 
 int main(int argc, char** argv){
 
@@ -202,11 +217,11 @@ void readSensors(unsigned char key, int x, int y) {
 	}
 	
 	writeShapes(positions);
-	playSound();
 
 }
 void writeShapes(int *positions) {
 	printf("%d %d %d %d\n", positions[0], positions[1], positions[2], positions[3]);
+	
 	int i;
 	int xp, yp;
 
@@ -221,6 +236,7 @@ void writeShapes(int *positions) {
 	glTexCoord2f(0, 0); glVertex3f(-2, 1, 0);
 
 	for (i = 0; i < 4; i++) {
+				
 		//dohvati predznak koordinata, ovisno koji je redni broj senzora
 		if (i < 2){
 			xp = -1;
@@ -328,36 +344,39 @@ void writeShapes(int *positions) {
 
 }
 
-int playSound() {
-	const int format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
-	//  const int format=SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-	const int channels = 1;
-	const int sampleRate = 48000;
-	const char* outfilename = "foo.wav";
-
-	cout << "wav_writer..." << endl;
-
-	SndfileHandle outfile(outfilename, SFM_WRITE, format, channels, sampleRate);
-	if (!outfile) {
-		return -1;
+void playSound() {
+	
+	int maxV=0;
+	int maxI = 0;
+	int i;
+	for (i = 0; i < 4; i++) {
+		if (positions[i] > maxV) {
+			maxV = positions[i];
+			maxI = i;
+		}
 	}
 
-	// prepare a 5 seconds buffer and write it
-	const int size = sampleRate * 5;
-	float sample[size], factor = 1.0;
-	for (int i = 0; i<size; i++) {
-		sample[i] = sin(float(i) / size* 1 * 3000) * factor;
-	}
-	outfile.write(&sample[0], size);
+	if (maxV==0) {
 
-	cout << "done!" << endl;
+	}
+	else {
+		if (maxI == 0 || maxI == 2 ) {
+			printf("%d\t %d\n", maxV, PlaySound("zvukovi\\R-1.wav", NULL, NULL));
+			usleep((float)1/(3000*maxV) * 10000000);
+		}
+		else {
+			printf("%d\n", PlaySound("zvukovi\\L-1.wav", NULL, NULL));
+			usleep((float)1/(3000*maxV) * 10000000);
+		}
+	}
+
 }
 
 void f_tipke(int key, int x, int y){
 	printf("%c", key);
 	switch (key) {
 	case GLUT_KEY_F1:
-		zvuk = 1;
+		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBegin(GL_QUADS);
 		glColor3f(1, 1, 1);
@@ -383,7 +402,7 @@ void f_tipke(int key, int x, int y){
 
 		break;
 	case GLUT_KEY_F2:
-		zvuk = 2;
+		
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBegin(GL_QUADS);
@@ -415,7 +434,7 @@ void f_tipke(int key, int x, int y){
 		glutSwapBuffers();
 		break;
 	case GLUT_KEY_F3:
-		zvuk = 3;
+		
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBegin(GL_QUADS);
@@ -455,7 +474,7 @@ void f_tipke(int key, int x, int y){
 		glutSwapBuffers();
 		break;
 	case GLUT_KEY_F4:
-		zvuk = 0;
+	
 		display();
 		break;
 	}
@@ -572,5 +591,6 @@ unsigned char* loadPPM(const char* filename, int& width, int& height) {
 /* ovo se poziva kad racuanlo nema nista za raditi (kad nista novo ne crtamo nego samo cekamo neki event) */
 void idle() 
 {
+	playSound();
     // display();     // call display callback, useful for animation
 } 
